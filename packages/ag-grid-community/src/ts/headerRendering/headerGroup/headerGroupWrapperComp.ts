@@ -98,10 +98,13 @@ export class HeaderGroupWrapperComp extends Component {
     private setupTooltip(): void {
         const colGroupDef = this.columnGroup.getColGroupDef();
 
-        // add tooltip if exists
-        if (colGroupDef && colGroupDef.headerTooltip) {
-            this.getGui().title = colGroupDef.headerTooltip;
+        if (!colGroupDef || colGroupDef.headerTooltip == null) {
+            return;
         }
+
+        const tooltipAttr = this.gridOptionsWrapper.isEnableLegacyTooltips() ? 'title' : 'data-tooltip';
+
+        this.getGui().setAttribute(tooltipAttr, colGroupDef.headerTooltip);
     }
 
     private onColumnMovingChanged(): void {

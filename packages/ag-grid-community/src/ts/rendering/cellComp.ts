@@ -146,7 +146,6 @@ export class CellComp extends Component {
             wrapperEndTemplate = '</span></span>';
         }
 
-        // hey, this looks like React!!!
         templateParts.push(`<div`);
         templateParts.push(` tabindex="-1"`);
         templateParts.push(` unselectable="on"`); // THIS IS FOR IE ONLY so text selection doesn't bubble outside of the grid
@@ -154,7 +153,8 @@ export class CellComp extends Component {
         templateParts.push(` comp-id="${this.getCompId()}" `);
         templateParts.push(` col-id="${colIdSanitised}"`);
         templateParts.push(` class="${cssClasses.join(' ')}"`);
-        templateParts.push(_.exists(tooltipSanitised) ? ` title="${tooltipSanitised}"` : ``);
+        const tooltipAttr = this.beans.gridOptionsWrapper.isEnableLegacyTooltips() ? 'title' : 'data-tooltip';
+        templateParts.push(_.exists(tooltipSanitised) ? ` ${tooltipAttr}="${tooltipSanitised}"` : ``);
         templateParts.push(` style="width: ${width}px; left: ${left}px; ${stylesFromColDef} ${stylesForRowSpanning}" >`);
         templateParts.push(wrapperStartTemplate);
         if (_.exists(valueSanitised, true)) {
@@ -614,13 +614,14 @@ export class CellComp extends Component {
 
     private refreshToolTip() {
         const newTooltip = this.getToolTip();
+        const tooltipAttr = this.beans.gridOptionsWrapper.isEnableLegacyTooltips() ? 'title' : 'data-tooltip';
         if (this.tooltip !== newTooltip) {
             this.tooltip = newTooltip;
             if (_.exists(newTooltip)) {
                 const tooltipSanitised = _.escape(this.tooltip);
-                this.eParentOfValue.setAttribute('title', tooltipSanitised!);
+                this.eParentOfValue.setAttribute(tooltipAttr, tooltipSanitised!);
             } else {
-                this.eParentOfValue.removeAttribute('title');
+                this.eParentOfValue.removeAttribute(tooltipAttr);
             }
         }
     }
@@ -645,8 +646,9 @@ export class CellComp extends Component {
         if (colDef.tooltipField && _.exists(data)) {
             return _.getValueUsingField(data, colDef.tooltipField, this.column.isTooltipFieldContainsDots());
         }
-        if (colDef.tooltip) {
-            return colDef.tooltip({
+        const valueGetter = colDef.tooltipValueGetter || colDef.tooltip;
+        if (valueGetter) {
+            return valueGetter({
                 value: this.value,
                 valueFormatted: this.valueFormatted,
                 data: this.rowNode.data,
